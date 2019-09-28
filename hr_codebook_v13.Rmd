@@ -1,0 +1,75 @@
+---
+title: "Codebook - HR Dataset v13"
+
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+ 
+
+author: "Dr. Rich Huebner"
+date: "9/27/2019"
+output: 
+  html_document: 
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+## Introduction to the HR Dataset - Version 13
+
+The HR Dataset was designed by Drs. Rich Huebner and Carla Patalano to accompany a case study designed for graduate HR students studying HR metrics, measurement, and analytics. The students use Tableau data visualization software to uncover insights about the case. This is a synthetic data set created specifically to go along with the case study (proprietary for the college that we teach at). 
+
+Every year or so, we update the data set to include additional columns, and to make slight changes to the underlying data. In this version, we add several new features to the data set:
+
+- Engagement Survey Results, a floating-point number, range between 1 and 5.
+- Special Project Count, integer, which is the number of special projects the employee worked on in the last year.
+- Last Performance Review Date, date, to ensure that all employees are receiving timely reviews.
+- Days Late in the Last 30 days, integer, as an attendance metric.
+
+Fields removed since last iteration
+
+- Any derived fields such as AGE and DaysEmployed have been removed.
+
+
+## Data Dictionary
+```{r datadictionary}
+dd_file = "HRDataset_v13_DataDictionary.csv"
+dd <- read.csv( dd_file, sep=",", header = TRUE )
+kableExtra::kable(dd)
+```
+
+## Structure of HR Data Set
+```{r dataset_structure, echo=FALSE}
+setwd("~/GitHub/HRDatasets")
+df<- read.csv("HRDataset_v13.csv", sep=",", header=TRUE)
+print(str(df))
+```
+
+## Sample Visualizations using ggplot2 and ggthemes
+```{r sample_analysis, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(df) +
+ aes(x = Department, y = EngagementSurvey) +
+ geom_boxplot(fill = "#00bf55") +
+ labs(title = "Engagement Survey Results", subtitle = "By Department") +
+ theme_minimal()
+
+
+
+ggplot(df) +
+ aes(x = Department, y = SpecialProjectsCount) +
+ geom_boxplot(fill = "#ed6925") +
+ labs(title = "Special Project Counts", subtitle = "By Department") +
+ theme_wsj()
+
+```
+
+
