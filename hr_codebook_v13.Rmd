@@ -62,8 +62,6 @@ ggplot(df) +
  labs(title = "Engagement Survey Results", subtitle = "By Department") +
  theme_minimal()
 
-
-
 ggplot(df) +
  aes(x = Department, y = SpecialProjectsCount) +
  geom_boxplot(fill = "#ed6925") +
