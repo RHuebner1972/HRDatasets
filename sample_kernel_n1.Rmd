@@ -1,0 +1,243 @@
+---
+title: "Sample Kernel for HR Dataset v13"
+author: "Dr. Rich Huebner"
+date: "10/4/2019"
+output: 
+  html_document: 
+    highlight: tango
+    theme: cerulean
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(magrittr)
+library(bnlearn)
+library(rpart)
+library(rpart.plot)
+library(rpart.utils)
+library(factoextra)
+```
+
+
+## Sample Kernel for HR Data Set v13
+
+
+
+## Structure of Data
+
+
+```{r}
+# Read data and show structure
+
+df <- read.csv("HRDataset_v13.csv", sep=",", header=TRUE)
+str(df)
+
+```
+
+## A bit of feature engineering and cleanup
+
+```{r}
+df$Position2  <- as.character(df$Position)
+sl <- sort(unique(df$Position2))
+for (s in 1:length(sl)) df$Position2[df$Position == sl[s]] <- LETTERS[s]    # A, B, C, D.
+df$Position2 <- as.factor(df$Position2)
+
+#simlar thing for department
+df$Department2 <- as.character(df$Department)
+dl <- sort(unique(df$Department2))
+for (s in 1:length(dl)) df$Department2[df$Department == dl[s]] <- LETTERS[s]   # A, B, C...
+df$Department2 <- as.factor(df$Department2)
+
+
+
+# Cleanup so that the visualizations are a little clearer
+df$RaceCd2[df$RaceDesc == 'American Indian or Alaska Native'] <- "AmerInd"
+df$RaceCd2[df$RaceDesc == 'White'] <- "White"
+df$RaceCd2[df$RaceDesc == 'Black or African American'] <- "Black"
+df$RaceCd2[df$RaceDesc == 'Asian'] <- "Asian"
+df$RaceCd2[df$RaceDesc == 'Hispanic'] <- "Hisp"
+df$RaceCd2[df$RaceDesc == 'Two or more races'] <- ">2"
+
+```
+
+
+
+## Problems with Attendance?
+
+
+```{r}
+
+ggplot(df) +
+ aes(x = RaceCd2, y = DaysLateLast30, fill = Department) +
+ geom_boxplot() +
+ scale_fill_hue() +
+ labs(title = "Who's Late?", subtitle = "An analysis of who is late") +
+ theme_minimal()
+
+```
+
+## Performance Score Analysis By Department
+
+```{r}
+
+ggplot(df) +
+ aes(x = Department2, y = EngagementSurvey) +
+ geom_boxplot(fill = "#33a02c") +
+ labs(title = "Engagement Survey Scores ", subtitle = "By Department, By Gender") +
+ theme_pander() +
+ facet_wrap(vars(Sex))
+
+```
+
+## Pay Across Departments
+
+```{r}
+
+df <- df %>%
+ filter(!(TermReason %in% ""))
+
+ggplot(df) +
+ aes(x = Department, y = PayRate) +
+ geom_boxplot(fill = "#ffccee") +
+ labs(title = "Pay Across Departments") +
+ theme_economist_white()
+
+```
+
+Not surprising that Software Engineering and Sales people are paid pretty high. The people that work on the production floor, however, are the 
+lowest paid within the business.
+
+
+## Pay Distribution
+
+```{r}
+ggplot(df) +
+ aes(x = PayRate) +
+ geom_histogram(bins = 30L, fill = "#6633ff") +
+ labs(title = "Pay Rate Distribution - Histogram") +
+ theme_pander()
+```
+
+
+## Engagement Survey Results 
+
+```{r}
+# Engagement Survey vs. Payrate -- anything there?
+# Figure out average engagement survey score per recruitment source
+
+k <- df %>%
+  dplyr::group_by(RecruitmentSource) %>%
+  summarize(mean_engagement = mean(EngagementSurvey, na.rm = TRUE))
+
+ggplot(k, aes(x=mean_engagement, y=RecruitmentSource, label = round(mean_engagement, digits = 2))) +
+ geom_text(size = 4) +
+ labs(title = "Engagement Survey Results vs. Recruitment Source")
+
+
+p <- df %>%
+  dplyr::group_by(Department) %>%
+  summarize(mean_engagement = mean(EngagementSurvey, na.rm = TRUE))
+
+ggplot(p, aes(x=mean_engagement, y=Department, label = round(mean_engagement, digits = 2))) +
+ geom_text(size = 4) +
+ labs(title = "Engagement Survey Results vs. Department")
+
+q <- df%>%
+  dplyr::group_by(RaceCd2) %>%
+  summarize(mean_engagement = mean(EngagementSurvey, na.rm = TRUE))
+ggplot(q, aes(x=mean_engagement, y=RaceCd2, label = round(mean_engagement, digits = 2))) +
+ geom_text(size = 4) +
+ labs(title = "Engagement Survey Results by Race Code")
+
+
+```
+
+
+## Number of Staff
+
+```{r}
+ s <- df %>%
+  dplyr::group_by(Position) %>%
+  summarize(num = n())
+
+ s$Position <- as.character(s$Position)
+ 
+ 
+ ggplot(s, aes(x=reorder(Position, num), y=num)) +
+   geom_text(aes(y=num, label=num)) +
+   theme_bw()+
+   theme(axis.text.x = element_text(angle=60, hjust=1),
+         panel.grid.major.y = element_blank(),
+         panel.grid.minor.y = element_blank(),
+         panel.grid.major.x = element_line(color="Blue", linetype="dotted")) +
+   labs(title = "Number of Employees per Position")
+ 
+ 
+ # num of employees per department
+ t <- df %>%
+   dplyr::group_by(Department) %>%
+   summarize(num = n())
+ 
+  ggplot(t, aes(x=reorder(Department, num), y=num)) +
+   geom_text(aes(y=num, label=num)) +
+   theme_bw()+
+   theme(axis.text.x = element_text(angle=45, hjust=1),
+         panel.grid.major.y = element_blank(),
+         panel.grid.minor.y = element_blank(),
+         panel.grid.major.x = element_line(color="Blue", linetype="dotted")) +
+   labs(title = "Number of Employees per Department")
+
+```
+
+
+## Relationships Between Pay and Engagement Survey
+
+```{r}
+
+ggplot(df) +
+ aes(x = PayRate, y = EngagementSurvey) +
+ geom_point(size = 1.56, colour = "#08519c") +
+ #geom_smooth(span = 0.75) +
+ theme_light()
+
+```
+
+## Clustering Approach - Unsupervised Learning Method
+
+```{r}
+
+s2<- df %>%
+        select(c(PayRate, EngagementSurvey, EmpSatisfaction, SpecialProjectsCount))
+s2_scaled <- scale(s2, center = TRUE, scale = TRUE)
+s2_scaled <- na.omit(s2_scaled)
+
+k_model <-  kmeans(s2_scaled, iter.max = 20, nstart = 20, centers = 2)
+p1 <- fviz_cluster(k_model, data = s2_scaled, geom = "point", repel = FALSE, ellipse = TRUE,
+                   palette = "Set1", ellipse.type = "norm", show.clust.cent = TRUE,
+                   ggtheme = theme_minimal(),
+                   main = "kMeans Clustering Plot")
+p1
+
+```
+
+kMeans clustering only explains 61% of the variability of these four variables.
+The structure of this data set could be explored further with more advacned clustering and unsupervised techniques.
+
+## Decision Tree Example
+
+```{r}
+ctl_tree <- rpart.control(minsplit = 20, maxdepth = 3)
+tree1 <- rpart( Termd ~ PayRate + Sex + MaritalDesc + RaceDesc + Department + PerformanceScore + SpecialProjectsCount, 
+                  data=df, method = "class", control = ctl_tree)      #, na.action=na.pass)
+rpart.plot(tree1, type=5, box.palette="RdBu", shadow.col="gray", nn=TRUE, main=(paste("Decision Tree Example")))
+
+```
+
+Next, we display the Decision Tree Rules:
+
+```{r}
+  rattle::asRules(tree1)
+```

@@ -1,5 +1,12 @@
 ---
 title: "Codebook - HR Dataset v13"
+
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+
 author: "Dr. Rich Huebner"
 date: "9/27/2019"
 output: 
@@ -33,6 +40,9 @@ Fields removed since last iteration
 
 ## Data Dictionary
 ```{r datadictionary}
+#setwd("C:\\Users\\richh\\OneDrive\\Documents\\R Code\\hr_dataset_codebook")
+setwd("~/GitHub/HRDatasets")
+
 dd_file = "HRDataset_v13_DataDictionary.csv"
 dd <- read.csv( dd_file, sep=",", header = TRUE )
 kableExtra::kable(dd)
@@ -40,7 +50,7 @@ kableExtra::kable(dd)
 
 ## Structure of HR Data Set
 ```{r dataset_structure, echo=FALSE}
-setwd("C:\\Users\\richh\\OneDrive\\Documents\\R Code\\hr_dataset_codebook")
+
 df<- read.csv("HRDataset_v13.csv", sep=",", header=TRUE)
 print(str(df))
 ```
