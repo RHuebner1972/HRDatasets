@@ -1,12 +1,4 @@
----
-title: "Codebook - HR Dataset v13"
-author: "Dr. Rich Huebner"
-date: "9/27/2019"
-output: 
-  html_document: 
-    theme: cerulean
----
+A sample kernel is available here.  (sample_kernel_n1.Rmd)
 
-
-Get the complete codebook HERE:  http://rpubs.com/rhuebner/HRCodebook-13
+Get the codebook HERE:  http://rpubs.com/rhuebner/HRCodebook-13
 
